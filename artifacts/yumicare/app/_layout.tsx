@@ -38,14 +38,17 @@ function RootLayoutNav() {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="onboarding" options={{ headerShown: false }} />
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen
-        name="emergency"
-        options={{ headerShown: false, presentation: "fullScreenModal" }}
-      />
-      <Stack.Screen
-        name="qr"
-        options={{ headerShown: false, presentation: "modal" }}
-      />
+      <Stack.Screen name="emergency" options={{ headerShown: false, presentation: "fullScreenModal" }} />
+      <Stack.Screen name="qr" options={{ headerShown: false, presentation: "modal" }} />
+      <Stack.Screen name="notifications" options={{ headerShown: false }} />
+      <Stack.Screen name="medications" options={{ headerShown: false }} />
+      <Stack.Screen name="allergies" options={{ headerShown: false }} />
+      <Stack.Screen name="appointments" options={{ headerShown: false }} />
+      <Stack.Screen name="messages" options={{ headerShown: false }} />
+      <Stack.Screen name="privacy" options={{ headerShown: false }} />
+      <Stack.Screen name="help" options={{ headerShown: false }} />
+      <Stack.Screen name="patient-detail" options={{ headerShown: false }} />
+      <Stack.Screen name="scan" options={{ headerShown: false }} />
     </Stack>
   );
 }
