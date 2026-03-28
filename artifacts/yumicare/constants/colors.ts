@@ -1,0 +1,27 @@
+export const Colors = {
+  teal: "#2EC4B6",
+  tealDark: "#1EA99C",
+  tealLight: "#E8F9F8",
+  tealMid: "#A8E8E4",
+  purple: "#7B5EA7",
+  purpleLight: "#F0EBF8",
+  white: "#FFFFFF",
+  background: "#F7FAFA",
+  cardBg: "#FFFFFF",
+  border: "#E8EFEF",
+  borderLight: "#F0F5F5",
+  text: "#1A2E2E",
+  textSecondary: "#5A7272",
+  textMuted: "#9AB0B0",
+  danger: "#E74C3C",
+  dangerLight: "#FDEDED",
+  warning: "#F39C12",
+  warningLight: "#FEF9E7",
+  success: "#27AE60",
+  successLight: "#EAFAF1",
+  overlay: "rgba(0,0,0,0.4)",
+  black: "#000000",
+  shadow: "rgba(46,196,182,0.15)",
+};
+
+export default Colors;

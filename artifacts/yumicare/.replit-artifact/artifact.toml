@@ -1,0 +1,27 @@
+kind = "mobile"
+previewPath = "/"
+title = "YumiCare"
+version = "1.0.0"
+id = "artifacts/yumicare"
+router = "expo-domain"
+
+[[integratedSkills]]
+name = "expo"
+version = "1.0.0"
+
+[[services]]
+ensurePreviewReachable = "/status"
+name = "expo"
+paths = [ "/" ]
+localPort = 21200
+
+[services.development]
+run = "pnpm --filter @workspace/yumicare run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/yumicare", "run", "build" ]
+run = [ "pnpm", "--filter", "@workspace/yumicare", "run", "serve" ]
+
+[services.env]
+PORT = "21200"
+BASE_PATH = "/"

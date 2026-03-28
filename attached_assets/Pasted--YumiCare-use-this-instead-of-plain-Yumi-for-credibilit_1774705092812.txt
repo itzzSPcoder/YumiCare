@@ -1,0 +1,182 @@
+
+YumiCare (use this instead of plain “Yumi” for credibility)
+🎯 Problem Statement
+Pregnant patients often have fragmented medical records across clinics, cities, and formats.
+In emergency situations, doctors lack:
+immediate access to patient history
+allergy and medication data
+pregnancy progression insights
+This results in:
+delayed treatment
+increased maternal/fetal risk
+poor continuity of care
+💡 Solution
+YumiCare is a secure, AI-assisted maternal health platform that:
+stores complete pregnancy medical records
+enables QR-based emergency access
+provides AI analysis of ultrasound & reports
+builds a continuous medical timeline
+⚙️ Core Features
+🔐 1. Digital Health Identity (QR System)
+https://www.researchgate.net/publication/365621679/figure/fig1/AS%3A11431281098667444%401669042845157/QR-code-to-access-patients-medical-records.png
+https://me-qr.com/static/pages/qr-codes-for-healthcare/block-7.png
+https://smartcareplus.in/_next/image?q=100&url=%2Fassets%2Ffeatures%2Fpatient%2Fdigital-health-id.png&w=3840
+Each patient gets a secure QR code
+QR contains only:
+encrypted patient ID
+Flow:
+Doctor scans QR
+Logs in
+System verifies
+Access granted based on role
+🚨 2. Emergency Access System
+Enables instant access in critical situations
+Shows:
+pregnancy week
+blood group
+allergies
+medications
+latest reports
+Rules:
+time-limited access
+fully logged
+auto-notify primary doctor
+👩‍⚕️ 3. Role-Based Access Control
+Role
+Access
+Patient
+Full control
+Primary Doctor
+Full access
+Secondary Doctor
+Needs approval
+Emergency Doctor
+Temporary limited
+📊 4. Medical Timeline Engine
+Tracks:
+ultrasound metrics (BPD, FL, HC)
+lab reports (Hb, BP, sugar)
+medications
+symptoms
+Output:
+growth charts
+trend analysis
+risk alerts
+🤖 5. AI Modules
+A. Ultrasound Analysis (2D only)
+https://www.researchgate.net/publication/323089598/figure/fig2/AS%3A873067379167233%401585166892858/Biparietal-diameter-BPD-dimension-outer-to-inner-A-and-outer-to-outer-B.jpg
+https://www.fetalultrasound.com/online/text/3-008_files/image004.jpg
+https://prod-images-static.radiopaedia.org/images/5338974/2a205e37e8d89227d4e907a9131c55_big_gallery.jpg
+Detect:
+BPD
+FL
+HC
+Tech:
+YOLOv8
+U-Net
+OpenCV
+B. Report OCR + NLP
+Extract:
+Hemoglobin
+Blood sugar
+BP
+Thyroid
+Tech:
+PaddleOCR / Tesseract
+LLM parsing
+📩 6. Doctor–Patient Communication
+Structured messaging:
+prescriptions
+supplements
+follow-ups
+🧾 7. Audit & Transparency
+Track:
+access logs
+edits
+timestamps
+🔄 8. Multi-Doctor Collaboration
+Multiple doctors can:
+view records
+add notes
+👉 No deletion, only append
+🚨 9. Offline Emergency Fallback
+QR shows:
+blood group
+allergies
+pregnancy status
+🏗️ System Architecture
+🖥️ Frontend
+Patient App:
+React / Next.js
+Features:
+QR display
+timeline
+uploads
+access logs
+Doctor Dashboard:
+React + Tailwind
+Features:
+QR scanner
+patient summary
+AI insights
+⚙️ Backend
+FastAPI (Python)
+Handles:
+APIs
+authentication
+access control
+🤖 AI Microservice
+PyTorch
+YOLOv8 / U-Net
+OCR pipeline
+🗄️ Database
+PostgreSQL
+Redis (cache)
+Tables:
+Patients
+Doctors
+Records
+Reports
+Logs
+🔐 Security
+JWT authentication
+AES-256 encryption
+HTTPS
+role-based access
+☁️ Deployment
+Docker
+AWS / Azure:
+EC2
+S3
+RDS
+🔄 Key Workflows
+Normal Case
+Patient approves doctor → full access
+Emergency Case
+QR scan → verified doctor → limited access
+Sync
+Updates visible across all doctors
+🚀 MVP (Hackathon Version)
+QR-based access
+doctor login
+1 ultrasound parameter detection (BPD)
+simple dashboard
+emergency access flow
+🧠 Brand Identity (YumiCare)
+Tone:
+clean
+calm
+trustworthy
+Colors:
+Primary: Soft Teal (#2EC4B6)
+Secondary: White + Light Gray
+Accent: Soft Purple
+UI Style:
+minimal
+rounded components
+medical-grade clarity
+⚡ Final Positioning
+YumiCare is not a basic app.
+It is:
+a secure, AI-assisted maternal healthcare infrastructure system
+designed for real-world hospital usage and emergency scenarios
