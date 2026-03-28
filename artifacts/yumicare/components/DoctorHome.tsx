@@ -1,12 +1,10 @@
 import React, { useState } from "react";
 import {
-  FlatList,
   Platform,
   RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -15,82 +13,29 @@ import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Colors from "@/constants/colors";
 import { useApp } from "@/context/AppContext";
-import type { DoctorPatient } from "@/context/AppContext";
 
-const STATUS_COLOR = {
-  stable: Colors.success,
-  attention: Colors.warning,
-  critical: Colors.danger,
-};
-const STATUS_BG = {
-  stable: Colors.successLight,
-  attention: Colors.warningLight,
-  critical: Colors.dangerLight,
-};
-const STATUS_LABEL = {
-  stable: "Stable",
-  attention: "Needs Attention",
-  critical: "Critical",
-};
-
-function PatientCard({ p, onPress }: { p: DoctorPatient; onPress: () => void }) {
-  const color = STATUS_COLOR[p.status];
-  const bg = STATUS_BG[p.status];
-  return (
-    <TouchableOpacity style={styles.patientCard} onPress={onPress} activeOpacity={0.8}>
-      <View style={styles.cardTop}>
-        <View style={styles.avatarCircle}>
-          <Text style={styles.avatarInitial}>{p.name.charAt(0)}</Text>
-        </View>
-        <View style={styles.cardInfo}>
-          <Text style={styles.cardName}>{p.name}</Text>
-          <Text style={styles.cardSub}>Age {p.age} · Week {p.pregnancyWeek} · {p.bloodGroup}</Text>
-        </View>
-        <View style={[styles.statusBadge, { backgroundColor: bg }]}>
-          <View style={[styles.statusDot, { backgroundColor: color }]} />
-          <Text style={[styles.statusLabel, { color }]}>{STATUS_LABEL[p.status]}</Text>
-        </View>
-      </View>
-      <View style={styles.cardBottom}>
-        <View style={styles.cardStat}>
-          <Ionicons name="calendar-outline" size={13} color={Colors.textMuted} />
-          <Text style={styles.cardStatText}>Last visit: {p.lastVisit}</Text>
-        </View>
-        <View style={styles.cardStat}>
-          <Ionicons name="time-outline" size={13} color={Colors.textMuted} />
-          <Text style={styles.cardStatText}>Due: {p.dueDate}</Text>
-        </View>
-      </View>
-    </TouchableOpacity>
-  );
-}
+const STATUS_COLOR = { stable: Colors.success, attention: Colors.warning, critical: Colors.danger };
+const STATUS_BG = { stable: Colors.successLight, attention: Colors.warningLight, critical: Colors.dangerLight };
+const STATUS_LABEL = { stable: "Stable", attention: "Needs Attention", critical: "Critical" };
 
 export default function DoctorHome() {
   const { doctorProfile, doctorPatients, notifications } = useApp();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const [search, setSearch] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 84 : insets.bottom + 80;
   const unreadCount = notifications.filter((n) => !n.read).length;
-
-  const filtered = search.trim()
-    ? doctorPatients.filter((p) =>
-        p.name.toLowerCase().includes(search.toLowerCase())
-      )
-    : doctorPatients;
-
-  const alertPatients = doctorPatients.filter(
-    (p) => p.status === "critical" || p.status === "attention"
-  );
+  const alertPatients = doctorPatients.filter((p) => p.status !== "stable");
+  const dueThisMonth = doctorPatients.filter((p) => p.pregnancyWeek >= 36);
 
   return (
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: topPad + 12 }]}>
         <View>
-          <Text style={styles.greeting}>Welcome back</Text>
+          <Text style={styles.greeting}>Good morning</Text>
           <Text style={styles.name}>{doctorProfile.name}</Text>
+          <Text style={styles.hospital}>{doctorProfile.specialization}</Text>
         </View>
         <View style={styles.headerActions}>
           <TouchableOpacity
@@ -117,7 +62,7 @@ export default function DoctorHome() {
 
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={{ paddingBottom: bottomPad }}
+        contentContainerStyle={{ padding: 20, paddingBottom: bottomPad, gap: 20 }}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={() => {
@@ -126,85 +71,120 @@ export default function DoctorHome() {
           }} tintColor={Colors.purple} />
         }
       >
-        <View style={{ paddingHorizontal: 20, paddingTop: 4, gap: 16 }}>
-          <View style={styles.statsRow}>
-            {[
-              { label: "Total Patients", value: String(doctorProfile.patientsCount), icon: "people-outline" as const, color: Colors.purple, bg: Colors.purpleLight },
-              { label: "Due This Month", value: "3", icon: "calendar-outline" as const, color: Colors.teal, bg: Colors.tealLight },
-              { label: "Alerts", value: String(alertPatients.length), icon: "warning-outline" as const, color: Colors.danger, bg: Colors.dangerLight },
-            ].map((s, i) => (
-              <View key={i} style={styles.statCard}>
-                <View style={[styles.statIcon, { backgroundColor: s.bg }]}>
-                  <Ionicons name={s.icon} size={18} color={s.color} />
-                </View>
-                <Text style={[styles.statValue, { color: s.color }]}>{s.value}</Text>
-                <Text style={styles.statLabel}>{s.label}</Text>
+        <View style={styles.statsRow}>
+          {[
+            { label: "Total Patients", value: String(doctorProfile.patientsCount), icon: "people-outline" as const, color: Colors.purple, bg: Colors.purpleLight },
+            { label: "Due Soon", value: String(dueThisMonth.length), icon: "calendar-outline" as const, color: Colors.teal, bg: Colors.tealLight },
+            { label: "Alerts", value: String(alertPatients.length), icon: "warning-outline" as const, color: Colors.danger, bg: Colors.dangerLight },
+          ].map((s, i) => (
+            <View key={i} style={styles.statCard}>
+              <View style={[styles.statIcon, { backgroundColor: s.bg }]}>
+                <Ionicons name={s.icon} size={18} color={s.color} />
               </View>
+              <Text style={[styles.statValue, { color: s.color }]}>{s.value}</Text>
+              <Text style={styles.statLabel}>{s.label}</Text>
+            </View>
+          ))}
+        </View>
+
+        <View style={styles.quickActions}>
+          {[
+            { icon: "people-outline" as const, label: "All Patients", route: "/(tabs)/timeline", color: Colors.purple, bg: Colors.purpleLight },
+            { icon: "chatbubbles-outline" as const, label: "Messages", route: "/(tabs)/records", color: Colors.teal, bg: Colors.tealLight },
+            { icon: "scan-outline" as const, label: "Upload Scan", route: "/ultrasound-upload", color: Colors.success, bg: Colors.successLight },
+            { icon: "qr-code-outline" as const, label: "Scan QR", route: "/scan", color: Colors.warning, bg: Colors.warningLight },
+          ].map((a, i) => (
+            <TouchableOpacity
+              key={i}
+              style={styles.quickActionItem}
+              onPress={() => router.push(a.route as any)}
+              activeOpacity={0.75}
+            >
+              <View style={[styles.quickActionIcon, { backgroundColor: a.bg }]}>
+                <Ionicons name={a.icon} size={22} color={a.color} />
+              </View>
+              <Text style={styles.quickActionLabel}>{a.label}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {alertPatients.length > 0 && (
+          <View style={styles.alertCard}>
+            <View style={styles.alertHeader}>
+              <View style={styles.alertHeaderLeft}>
+                <Ionicons name="alert-circle" size={16} color={Colors.danger} />
+                <Text style={styles.alertTitle}>Needs Attention</Text>
+              </View>
+              <Text style={styles.alertCount}>{alertPatients.length} patient{alertPatients.length > 1 ? "s" : ""}</Text>
+            </View>
+            {alertPatients.map((p, i) => (
+              <TouchableOpacity
+                key={p.id}
+                style={[styles.alertRow, i > 0 && styles.alertDivider]}
+                onPress={() => router.push({ pathname: "/patient-detail", params: { id: p.id } })}
+                activeOpacity={0.8}
+              >
+                <View style={[styles.alertDot, { backgroundColor: STATUS_COLOR[p.status] }]} />
+                <View style={styles.alertInfo}>
+                  <Text style={styles.alertName}>{p.name}</Text>
+                  <Text style={styles.alertSub}>Week {p.pregnancyWeek} · {STATUS_LABEL[p.status]}</Text>
+                </View>
+                <View style={styles.alertBtns}>
+                  <TouchableOpacity
+                    style={styles.alertActionBtn}
+                    onPress={() => router.push({ pathname: "/doctor-chat", params: { patientId: p.id } })}
+                    activeOpacity={0.8}
+                  >
+                    <Ionicons name="chatbubble-outline" size={15} color={Colors.purple} />
+                  </TouchableOpacity>
+                  <Ionicons name="chevron-forward" size={16} color={Colors.textMuted} />
+                </View>
+              </TouchableOpacity>
             ))}
           </View>
+        )}
 
-          {alertPatients.length > 0 && (
-            <View style={styles.alertSection}>
-              <View style={styles.alertHeader}>
-                <Ionicons name="alert-circle" size={16} color={Colors.danger} />
-                <Text style={styles.alertTitle}>Requires Attention</Text>
-              </View>
-              {alertPatients.map((p) => (
-                <TouchableOpacity
-                  key={p.id}
-                  style={styles.alertRow}
-                  onPress={() => router.push({ pathname: "/patient-detail", params: { id: p.id } })}
-                  activeOpacity={0.8}
-                >
-                  <View style={[styles.alertDot, { backgroundColor: STATUS_COLOR[p.status] }]} />
-                  <View style={styles.alertInfo}>
-                    <Text style={styles.alertName}>{p.name}</Text>
-                    <Text style={styles.alertSub}>Week {p.pregnancyWeek} · {STATUS_LABEL[p.status]}</Text>
-                  </View>
-                  <Ionicons name="chevron-forward" size={16} color={Colors.textMuted} />
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
-
-          <View>
-            <View style={styles.sectionRow}>
-              <Text style={styles.sectionTitle}>My Patients</Text>
-              <Text style={styles.sectionCount}>{filtered.length} patients</Text>
-            </View>
-            <View style={styles.searchBox}>
-              <Ionicons name="search-outline" size={18} color={Colors.textMuted} />
-              <TextInput
-                style={styles.searchInput}
-                placeholder="Search patients..."
-                placeholderTextColor={Colors.textMuted}
-                value={search}
-                onChangeText={setSearch}
-              />
-              {!!search && (
-                <TouchableOpacity onPress={() => setSearch("")}>
-                  <Ionicons name="close-circle" size={18} color={Colors.textMuted} />
-                </TouchableOpacity>
-              )}
-            </View>
-          </View>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Recent Patients</Text>
+          <TouchableOpacity onPress={() => router.push("/(tabs)/timeline")} activeOpacity={0.8}>
+            <Text style={styles.sectionLink}>View All</Text>
+          </TouchableOpacity>
         </View>
-
-        <View style={{ paddingHorizontal: 20, gap: 12, marginTop: 12 }}>
-          {filtered.map((p) => (
-            <PatientCard
-              key={p.id}
-              p={p}
-              onPress={() => router.push({ pathname: "/patient-detail", params: { id: p.id } })}
-            />
-          ))}
-          {filtered.length === 0 && (
-            <View style={styles.emptySearch}>
-              <Ionicons name="search-outline" size={40} color={Colors.tealMid} />
-              <Text style={styles.emptyText}>No patients found</Text>
+        {doctorPatients.slice(0, 3).map((p, i) => (
+          <TouchableOpacity
+            key={p.id}
+            style={styles.patientRow}
+            onPress={() => router.push({ pathname: "/patient-detail", params: { id: p.id } })}
+            activeOpacity={0.8}
+          >
+            <View style={styles.rowAvatar}>
+              <Text style={styles.rowInitial}>{p.name.charAt(0)}</Text>
             </View>
-          )}
-        </View>
+            <View style={styles.rowInfo}>
+              <Text style={styles.rowName}>{p.name}</Text>
+              <Text style={styles.rowSub}>Week {p.pregnancyWeek} · Last seen {p.lastVisit}</Text>
+            </View>
+            <View style={[styles.miniStatus, { backgroundColor: STATUS_BG[p.status] }]}>
+              <View style={[styles.miniDot, { backgroundColor: STATUS_COLOR[p.status] }]} />
+            </View>
+            <View style={styles.rowActions}>
+              <TouchableOpacity
+                onPress={() => router.push({ pathname: "/doctor-chat", params: { patientId: p.id } })}
+                style={styles.rowIconBtn}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="chatbubble-outline" size={15} color={Colors.purple} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => router.push({ pathname: "/ultrasound-upload", params: { patientId: p.id } })}
+                style={[styles.rowIconBtn, { backgroundColor: Colors.tealLight }]}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="scan-outline" size={15} color={Colors.teal} />
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+        ))}
       </ScrollView>
     </View>
   );
@@ -215,14 +195,14 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "flex-end",
+    alignItems: "flex-start",
     paddingHorizontal: 20,
     paddingBottom: 16,
-    backgroundColor: Colors.background,
   },
   greeting: { fontSize: 13, fontFamily: "Inter_400Regular", color: Colors.textMuted },
-  name: { fontSize: 22, fontFamily: "Inter_700Bold", color: Colors.text },
-  headerActions: { flexDirection: "row", gap: 8 },
+  name: { fontSize: 22, fontFamily: "Inter_700Bold", color: Colors.text, marginTop: 2 },
+  hospital: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.purple, marginTop: 2 },
+  headerActions: { flexDirection: "row", gap: 8, paddingTop: 4 },
   iconBtn: {
     width: 44,
     height: 44,
@@ -256,111 +236,99 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 14,
     alignItems: "center",
-    gap: 6,
+    gap: 4,
     shadowColor: Colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 1,
     shadowRadius: 8,
     elevation: 2,
   },
-  statIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: 11,
-    alignItems: "center",
-    justifyContent: "center",
-  },
+  statIcon: { width: 36, height: 36, borderRadius: 10, alignItems: "center", justifyContent: "center" },
   statValue: { fontSize: 22, fontFamily: "Inter_700Bold" },
   statLabel: { fontSize: 10, fontFamily: "Inter_400Regular", color: Colors.textMuted, textAlign: "center" },
-  alertSection: {
-    backgroundColor: Colors.dangerLight,
-    borderRadius: 16,
-    padding: 14,
-    gap: 8,
-    borderWidth: 1,
-    borderColor: Colors.danger + "30",
-  },
-  alertHeader: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 4 },
-  alertTitle: { fontSize: 14, fontFamily: "Inter_700Bold", color: Colors.danger },
-  alertRow: {
+  quickActions: {
     flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
+    justifyContent: "space-between",
     backgroundColor: Colors.white,
-    borderRadius: 10,
-    padding: 12,
+    borderRadius: 20,
+    padding: 16,
+    shadowColor: Colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 8,
+    elevation: 2,
   },
+  quickActionItem: { alignItems: "center", gap: 8 },
+  quickActionIcon: { width: 50, height: 50, borderRadius: 16, alignItems: "center", justifyContent: "center" },
+  quickActionLabel: { fontSize: 11, fontFamily: "Inter_500Medium", color: Colors.textSecondary },
+  alertCard: {
+    backgroundColor: Colors.white,
+    borderRadius: 20,
+    padding: 16,
+    shadowColor: Colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 8,
+    elevation: 2,
+    borderLeftWidth: 3,
+    borderLeftColor: Colors.danger,
+  },
+  alertHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
+  alertHeaderLeft: { flexDirection: "row", alignItems: "center", gap: 6 },
+  alertTitle: { fontSize: 15, fontFamily: "Inter_700Bold", color: Colors.danger },
+  alertCount: { fontSize: 12, fontFamily: "Inter_500Medium", color: Colors.textMuted },
+  alertRow: { flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 10 },
+  alertDivider: { borderTopWidth: 1, borderTopColor: Colors.border },
   alertDot: { width: 10, height: 10, borderRadius: 5 },
   alertInfo: { flex: 1 },
   alertName: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: Colors.text },
-  alertSub: { fontSize: 11, fontFamily: "Inter_400Regular", color: Colors.textMuted, marginTop: 1 },
-  sectionRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 10,
-  },
-  sectionTitle: { fontSize: 18, fontFamily: "Inter_700Bold", color: Colors.text },
-  sectionCount: { fontSize: 13, fontFamily: "Inter_400Regular", color: Colors.textMuted },
-  searchBox: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    backgroundColor: Colors.white,
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderWidth: 1.5,
-    borderColor: Colors.border,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 15,
-    fontFamily: "Inter_400Regular",
-    color: Colors.text,
-  },
-  patientCard: {
-    backgroundColor: Colors.white,
-    borderRadius: 18,
-    padding: 16,
-    shadowColor: Colors.shadow,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 1,
-    shadowRadius: 10,
-    elevation: 2,
-  },
-  cardTop: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 10 },
-  avatarCircle: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
+  alertSub: { fontSize: 11, fontFamily: "Inter_400Regular", color: Colors.textMuted },
+  alertBtns: { flexDirection: "row", alignItems: "center", gap: 8 },
+  alertActionBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 8,
     backgroundColor: Colors.purpleLight,
     alignItems: "center",
     justifyContent: "center",
   },
-  avatarInitial: { fontSize: 20, fontFamily: "Inter_700Bold", color: Colors.purple },
-  cardInfo: { flex: 1 },
-  cardName: { fontSize: 15, fontFamily: "Inter_700Bold", color: Colors.text },
-  cardSub: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.textMuted, marginTop: 2 },
-  statusBadge: {
+  sectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  sectionTitle: { fontSize: 18, fontFamily: "Inter_700Bold", color: Colors.text },
+  sectionLink: { fontSize: 13, fontFamily: "Inter_600SemiBold", color: Colors.purple },
+  patientRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
+    gap: 12,
+    backgroundColor: Colors.white,
+    borderRadius: 16,
+    padding: 14,
+    shadowColor: Colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 6,
+    elevation: 1,
   },
-  statusDot: { width: 6, height: 6, borderRadius: 3 },
-  statusLabel: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
-  cardBottom: {
-    flexDirection: "row",
-    gap: 16,
-    paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: Colors.border,
+  rowAvatar: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: Colors.purpleLight,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  cardStat: { flexDirection: "row", alignItems: "center", gap: 4 },
-  cardStatText: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.textMuted },
-  emptySearch: { alignItems: "center", paddingTop: 60, gap: 10 },
-  emptyText: { fontSize: 15, fontFamily: "Inter_500Medium", color: Colors.textMuted },
+  rowInitial: { fontSize: 17, fontFamily: "Inter_700Bold", color: Colors.purple },
+  rowInfo: { flex: 1 },
+  rowName: { fontSize: 14, fontFamily: "Inter_700Bold", color: Colors.text },
+  rowSub: { fontSize: 11, fontFamily: "Inter_400Regular", color: Colors.textMuted, marginTop: 2 },
+  miniStatus: { width: 20, height: 20, borderRadius: 6, alignItems: "center", justifyContent: "center" },
+  miniDot: { width: 8, height: 8, borderRadius: 4 },
+  rowActions: { flexDirection: "row", gap: 6 },
+  rowIconBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 9,
+    backgroundColor: Colors.purpleLight,
+    alignItems: "center",
+    justifyContent: "center",
+  },
 });

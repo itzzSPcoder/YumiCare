@@ -49,6 +49,8 @@ function RootLayoutNav() {
       <Stack.Screen name="help" options={{ headerShown: false }} />
       <Stack.Screen name="patient-detail" options={{ headerShown: false }} />
       <Stack.Screen name="scan" options={{ headerShown: false }} />
+      <Stack.Screen name="doctor-chat" options={{ headerShown: false }} />
+      <Stack.Screen name="ultrasound-upload" options={{ headerShown: false }} />
     </Stack>
   );
 }

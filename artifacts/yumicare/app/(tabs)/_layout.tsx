@@ -1,45 +1,24 @@
 import { BlurView } from "expo-blur";
-import { isLiquidGlassAvailable } from "expo-glass-effect";
 import { Tabs } from "expo-router";
-import { Icon, Label, NativeTabs } from "expo-router/unstable-native-tabs";
 import { SymbolView } from "expo-symbols";
-import { Feather, Ionicons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { Platform, StyleSheet, View, useColorScheme } from "react-native";
 import Colors from "@/constants/colors";
+import { useApp } from "@/context/AppContext";
 
-function NativeTabLayout() {
-  return (
-    <NativeTabs>
-      <NativeTabs.Trigger name="index">
-        <Icon sf={{ default: "house", selected: "house.fill" }} />
-        <Label>Home</Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="timeline">
-        <Icon sf={{ default: "clock", selected: "clock.fill" }} />
-        <Label>Timeline</Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="records">
-        <Icon sf={{ default: "folder", selected: "folder.fill" }} />
-        <Label>Records</Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="profile">
-        <Icon sf={{ default: "person", selected: "person.fill" }} />
-        <Label>Profile</Label>
-      </NativeTabs.Trigger>
-    </NativeTabs>
-  );
-}
-
-function ClassicTabLayout() {
+export default function TabLayout() {
   const isDark = useColorScheme() === "dark";
   const isIOS = Platform.OS === "ios";
   const isWeb = Platform.OS === "web";
+  const { role } = useApp();
+  const isDoctor = role === "doctor";
+  const activeColor = isDoctor ? Colors.purple : Colors.teal;
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors.teal,
+        tabBarActiveTintColor: activeColor,
         tabBarInactiveTintColor: Colors.textMuted,
         headerShown: false,
         tabBarStyle: {
@@ -58,9 +37,7 @@ function ClassicTabLayout() {
               style={StyleSheet.absoluteFill}
             />
           ) : isWeb ? (
-            <View
-              style={[StyleSheet.absoluteFill, { backgroundColor: Colors.white }]}
-            />
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: Colors.white }]} />
           ) : null,
       }}
     >
@@ -76,30 +53,45 @@ function ClassicTabLayout() {
             ),
         }}
       />
+
       <Tabs.Screen
         name="timeline"
         options={{
-          title: "Timeline",
+          title: isDoctor ? "Patients" : "Timeline",
           tabBarIcon: ({ color }) =>
-            isIOS ? (
+            isDoctor ? (
+              isIOS ? (
+                <SymbolView name="person.2" tintColor={color} size={24} />
+              ) : (
+                <Ionicons name="people-outline" size={22} color={color} />
+              )
+            ) : isIOS ? (
               <SymbolView name="clock" tintColor={color} size={24} />
             ) : (
               <Ionicons name="time-outline" size={22} color={color} />
             ),
         }}
       />
+
       <Tabs.Screen
         name="records"
         options={{
-          title: "Records",
+          title: isDoctor ? "Messages" : "Records",
           tabBarIcon: ({ color }) =>
-            isIOS ? (
+            isDoctor ? (
+              isIOS ? (
+                <SymbolView name="message" tintColor={color} size={24} />
+              ) : (
+                <Ionicons name="chatbubbles-outline" size={22} color={color} />
+              )
+            ) : isIOS ? (
               <SymbolView name="folder" tintColor={color} size={24} />
             ) : (
               <Ionicons name="folder-outline" size={22} color={color} />
             ),
         }}
       />
+
       <Tabs.Screen
         name="profile"
         options={{
@@ -114,11 +106,4 @@ function ClassicTabLayout() {
       />
     </Tabs>
   );
-}
-
-export default function TabLayout() {
-  if (isLiquidGlassAvailable()) {
-    return <NativeTabLayout />;
-  }
-  return <ClassicTabLayout />;
 }
