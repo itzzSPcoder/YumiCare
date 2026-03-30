@@ -21,22 +21,23 @@ SplashScreen.preventAutoHideAsync();
 const queryClient = new QueryClient();
 
 function RootLayoutNav() {
-  const { isOnboarded } = useApp();
+  const { isLoggedIn } = useApp();
   const router = useRouter();
   const segments = useSegments();
 
   useEffect(() => {
-    const inOnboarding = segments[0] === "onboarding";
-    if (!isOnboarded && !inOnboarding) {
-      router.replace("/onboarding");
-    } else if (isOnboarded && inOnboarding) {
+    const inLogin = segments[0] === "login";
+    const inTabs = segments[0] === "(tabs)";
+    if (!isLoggedIn && !inLogin) {
+      router.replace("/login");
+    } else if (isLoggedIn && inLogin) {
       router.replace("/(tabs)");
     }
-  }, [isOnboarded, segments]);
+  }, [isLoggedIn, segments]);
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="onboarding" options={{ headerShown: false }} />
+      <Stack.Screen name="login" options={{ headerShown: false }} />
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="emergency" options={{ headerShown: false, presentation: "fullScreenModal" }} />
       <Stack.Screen name="qr" options={{ headerShown: false, presentation: "modal" }} />
@@ -51,6 +52,12 @@ function RootLayoutNav() {
       <Stack.Screen name="scan" options={{ headerShown: false }} />
       <Stack.Screen name="doctor-chat" options={{ headerShown: false }} />
       <Stack.Screen name="ultrasound-upload" options={{ headerShown: false }} />
+      <Stack.Screen name="add-patient" options={{ headerShown: false }} />
+      <Stack.Screen name="add-doctor" options={{ headerShown: false }} />
+      <Stack.Screen name="add-hospital" options={{ headerShown: false }} />
+      <Stack.Screen name="hospital-detail" options={{ headerShown: false }} />
+      <Stack.Screen name="doctor-detail" options={{ headerShown: false }} />
+      <Stack.Screen name="admin-reports" options={{ headerShown: false }} />
     </Stack>
   );
 }

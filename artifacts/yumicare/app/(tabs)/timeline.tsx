@@ -1,3 +1,5 @@
+import HospitalDoctors from "@/components/HospitalDoctors";
+import AdminHospitals from "@/components/AdminHospitals";
 import React, { useState } from "react";
 import {
   FlatList,
@@ -259,6 +261,8 @@ function DoctorPatients() {
 export default function TimelineScreen() {
   const { role } = useApp();
   if (role === "doctor") return <DoctorPatients />;
+  if (role === "hospital") return <HospitalDoctors />;
+  if (role === "admin") return <AdminHospitals />;
   return <PatientTimeline />;
 }
 

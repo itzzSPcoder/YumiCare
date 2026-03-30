@@ -13,6 +13,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Colors from "@/constants/colors";
 import { useApp } from "@/context/AppContext";
 import { QRCodeDisplay } from "@/components/QRCodeDisplay";
+import HospitalPatients from "@/components/HospitalPatients";
+import AdminReports from "@/components/AdminReports";
 import { SectionHeader } from "@/components/SectionHeader";
 
 // ─── Patient Records ──────────────────────────────────────────────────────────
@@ -165,6 +167,8 @@ function DoctorMessages() {
 export default function RecordsScreen() {
   const { role } = useApp();
   if (role === "doctor") return <DoctorMessages />;
+  if (role === "hospital") return <HospitalPatients />;
+  if (role === "admin") return <AdminReports />;
   return <PatientRecords />;
 }
 
