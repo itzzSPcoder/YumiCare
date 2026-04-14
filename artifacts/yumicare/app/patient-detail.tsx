@@ -159,9 +159,13 @@ export default function PatientDetailScreen() {
             <Ionicons name="add-circle-outline" size={18} color={Colors.teal} />
             <Text style={styles.actionBtnText}>Add Note</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.actionBtn, { backgroundColor: Colors.purpleLight }]} activeOpacity={0.8}>
+          <TouchableOpacity style={[styles.actionBtn, { backgroundColor: Colors.purpleLight }]} onPress={() => router.push(`/write-prescription?patientId=${p.id}` as any)} activeOpacity={0.8}>
             <Ionicons name="create-outline" size={18} color={Colors.purple} />
             <Text style={[styles.actionBtnText, { color: Colors.purple }]}>Prescribe</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.actionBtn, { backgroundColor: "#F3E8FF" }]} onPress={() => router.push(`/ultrasound-analysis?patientId=${p.id}` as any)} activeOpacity={0.8}>
+            <Ionicons name="sparkles" size={18} color="#9333EA" />
+            <Text style={[styles.actionBtnText, { color: "#9333EA" }]}>AI Scan</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

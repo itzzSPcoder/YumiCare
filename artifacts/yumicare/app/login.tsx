@@ -41,6 +41,26 @@ export default function LoginScreen() {
   const [password, setPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showDevCreds, setShowDevCreds] = useState(false);
+  const [logoTaps, setLogoTaps] = useState(0);
+
+  const handleLogoTap = () => {
+    const newTaps = logoTaps + 1;
+    setLogoTaps(newTaps);
+    if (newTaps >= 7) {
+      setShowDevCreds(!showDevCreds);
+      setLogoTaps(0);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    }
+  };
+
+  const handleForgotPassword = () => {
+    Alert.alert(
+      "Forgot Password?",
+      "Please contact your hospital administrator or system admin to reset your password.\n\nAdmin: admin@yumicare.com",
+      [{ text: "OK" }]
+    );
+  };
 
   const cfg = ROLE_CONFIG[selectedRole];
 
@@ -79,12 +99,12 @@ export default function LoginScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.logoRow}>
+        <TouchableOpacity style={styles.logoRow} onPress={handleLogoTap} activeOpacity={0.9}>
           <View style={[styles.logoIcon, { backgroundColor: cfg.color }]}>
             <Ionicons name="heart" size={22} color={Colors.white} />
           </View>
           <Text style={styles.logoText}>YumiCare</Text>
-        </View>
+        </TouchableOpacity>
 
         <Text style={styles.headline}>Welcome back</Text>
         <Text style={styles.subline}>Sign in to your account</Text>
@@ -163,6 +183,10 @@ export default function LoginScreen() {
             </View>
           </View>
 
+          <TouchableOpacity onPress={handleForgotPassword} activeOpacity={0.7} style={{ alignSelf: "flex-end" }}>
+            <Text style={styles.forgotText}>Forgot Password?</Text>
+          </TouchableOpacity>
+
           <TouchableOpacity
             style={[styles.loginBtn, { backgroundColor: cfg.color }, loading && { opacity: 0.75 }]}
             onPress={handleLogin}
@@ -178,29 +202,29 @@ export default function LoginScreen() {
               </>
             )}
           </TouchableOpacity>
-
-          <TouchableOpacity style={styles.demoBtn} onPress={autofill} activeOpacity={0.8}>
-            <Ionicons name="flash-outline" size={15} color={cfg.color} />
-            <Text style={[styles.demoBtnText, { color: cfg.color }]}>Use demo credentials for {cfg.label}</Text>
-          </TouchableOpacity>
         </View>
 
-        <View style={styles.credBox}>
-          <Text style={styles.credTitle}>Demo Credentials</Text>
-          <View style={styles.credGrid}>
-            {(Object.keys(DEMO_CREDS) as UserRole[]).map((role) => {
-              const c = DEMO_CREDS[role];
-              const r = ROLE_CONFIG[role];
-              return (
-                <View key={role} style={[styles.credCard, { borderLeftColor: r.color }]}>
-                  <Text style={[styles.credRole, { color: r.color }]}>{r.label}</Text>
-                  <Text style={styles.credEmail}>{c.email}</Text>
-                  <Text style={styles.credPass}>{c.password}</Text>
-                </View>
-              );
-            })}
+        {showDevCreds && (
+          <View style={styles.credBox}>
+            <View style={styles.devHeader}>
+              <Ionicons name="code-outline" size={16} color={Colors.warning} />
+              <Text style={styles.credTitle}>Developer Mode</Text>
+            </View>
+            <View style={styles.credGrid}>
+              {(Object.keys(DEMO_CREDS) as UserRole[]).map((role) => {
+                const c = DEMO_CREDS[role];
+                const r = ROLE_CONFIG[role];
+                return (
+                  <TouchableOpacity key={role} style={[styles.credCard, { borderLeftColor: r.color }]} onPress={() => { setSelectedRole(role); setEmail(c.email); setPassword(c.password); Haptics.selectionAsync(); }} activeOpacity={0.8}>
+                    <Text style={[styles.credRole, { color: r.color }]}>{r.label}</Text>
+                    <Text style={styles.credEmail}>{c.email}</Text>
+                    <Text style={styles.credPass}>{c.password}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
           </View>
-        </View>
+        )}
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -280,24 +304,20 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   loginBtnText: { fontSize: 16, fontFamily: "Inter_700Bold", color: Colors.white },
-  demoBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    paddingVertical: 6,
-  },
-  demoBtnText: { fontSize: 13, fontFamily: "Inter_500Medium" },
+  forgotText: { fontSize: 13, fontFamily: "Inter_500Medium", color: Colors.teal },
   credBox: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.warningLight,
     borderRadius: 16,
     padding: 16,
     gap: 12,
+    borderWidth: 1.5,
+    borderColor: Colors.warning + "40",
   },
-  credTitle: { fontSize: 13, fontFamily: "Inter_700Bold", color: Colors.text },
+  devHeader: { flexDirection: "row", alignItems: "center", gap: 6 },
+  credTitle: { fontSize: 13, fontFamily: "Inter_700Bold", color: Colors.warning },
   credGrid: { gap: 8 },
   credCard: {
-    backgroundColor: Colors.background,
+    backgroundColor: Colors.white,
     borderRadius: 10,
     padding: 10,
     borderLeftWidth: 3,

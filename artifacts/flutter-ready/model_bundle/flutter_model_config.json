@@ -1,0 +1,19 @@
+{
+  "model_type": "yolo",
+  "task": "detect",
+  "input_size": [
+    640,
+    640
+  ],
+  "channels": 3,
+  "class_names": [
+    "Brain",
+    "CSP",
+    "LV"
+  ],
+  "num_classes": 3,
+  "notes": [
+    "Use letterbox resize to keep aspect ratio",
+    "Apply confidence and IoU thresholding in postprocess"
+  ]
+}

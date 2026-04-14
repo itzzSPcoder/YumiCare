@@ -15,49 +15,36 @@ import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
-import { useApp } from "@/context/AppContext";
-
-type MsgType = "text" | "voice" | "image" | "video";
-
-interface Message {
-  id: string;
-  from: "doctor" | "patient";
-  type: MsgType;
-  text?: string;
-  duration?: string;
-  mediaLabel?: string;
-  time: string;
-}
-
-const INITIAL_MESSAGES: Message[] = [
-  { id: "1", from: "doctor", type: "text", text: "Hello Aisha! Your latest blood work looks good. Hemoglobin is slightly low — please continue your iron supplements.", time: "10:32 AM" },
-  { id: "2", from: "patient", type: "text", text: "Thank you doctor. Should I be concerned about the glucose level?", time: "10:45 AM" },
-  { id: "3", from: "doctor", type: "text", text: "The glucose of 128 on the screening is borderline. Let's do a full 3-hour GTT at your next visit. Reduce refined sugars.", time: "11:02 AM" },
-  { id: "4", from: "doctor", type: "voice", duration: "0:32", time: "11:05 AM" },
-  { id: "5", from: "patient", type: "text", text: "Understood. Also, I've been feeling mild swelling in my feet. Is that normal?", time: "11:15 AM" },
-  { id: "6", from: "doctor", type: "text", text: "Some swelling is normal at 24 weeks. Elevate your feet when resting and reduce sodium intake. Call me if it worsens or you notice facial swelling.", time: "11:28 AM" },
-  { id: "7", from: "doctor", type: "image", mediaLabel: "your_scan_report.jpg", time: "11:30 AM" },
-];
+import { useApp, type ChatMessage } from "@/context/AppContext";
 
 export default function MessagesScreen() {
   const router = useRouter();
-  const { patient } = useApp();
+  const { patient, currentUser, getConversation, sendChatMessage } = useApp();
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const scrollRef = useRef<ScrollView>(null);
-  const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
   const [text, setText] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const [holdTimer, setHoldTimer] = useState<ReturnType<typeof setInterval> | null>(null);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
 
+  const patientId = patient?.id ?? currentUser?.id ?? "pat-001";
+  const doctorId = "doc-001";
+  const conversationKey = `${doctorId}_${patientId}`;
+  const messages = getConversation(doctorId, patientId);
+  const doctorName = patient?.primaryDoctor ?? "Dr. Priya Sharma";
+
   const send = () => {
     if (!text.trim()) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setMessages((prev) => [
-      ...prev,
-      { id: String(Date.now()), from: "patient", type: "text", text: text.trim(), time: "Now" },
-    ]);
+    sendChatMessage({
+      conversationKey,
+      from: "patient",
+      fromId: patientId,
+      type: "text",
+      text: text.trim(),
+      time: new Date().toLocaleTimeString("en", { hour: "2-digit", minute: "2-digit" }),
+    });
     setText("");
     setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
   };
@@ -76,10 +63,14 @@ export default function MessagesScreen() {
     if (recordingSeconds < 1) { setIsRecording(false); setRecordingSeconds(0); return; }
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     const dur = `0:${String(recordingSeconds).padStart(2, "0")}`;
-    setMessages((prev) => [
-      ...prev,
-      { id: String(Date.now()), from: "patient", type: "voice", duration: dur, time: "Now" },
-    ]);
+    sendChatMessage({
+      conversationKey,
+      from: "patient",
+      fromId: patientId,
+      type: "voice",
+      duration: dur,
+      time: new Date().toLocaleTimeString("en", { hour: "2-digit", minute: "2-digit" }),
+    });
     setIsRecording(false);
     setRecordingSeconds(0);
     setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
@@ -95,24 +86,22 @@ export default function MessagesScreen() {
         {
           text: "Send",
           onPress: () => {
-            setMessages((prev) => [
-              ...prev,
-              {
-                id: String(Date.now()),
-                from: "patient",
-                type,
-                mediaLabel: type === "image" ? "photo.jpg" : "video.mp4",
-                time: "Now",
-              },
-            ]);
+            sendChatMessage({
+              conversationKey,
+              from: "patient",
+              fromId: patientId,
+              type,
+              mediaLabel: type === "image" ? "photo.jpg" : "video.mp4",
+              time: new Date().toLocaleTimeString("en", { hour: "2-digit", minute: "2-digit" }),
+            });
             setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
           },
         },
-      ]
+      ],
     );
   };
 
-  const renderMsg = (msg: Message) => {
+  const renderMsg = (msg: ChatMessage) => {
     const isPatient = msg.from === "patient";
     return (
       <View key={msg.id} style={[styles.msgRow, isPatient && styles.msgRowRight]}>
@@ -143,9 +132,7 @@ export default function MessagesScreen() {
               <View style={styles.imgPreview}>
                 <Ionicons name="image" size={30} color={isPatient ? Colors.teal : Colors.purple} />
               </View>
-              <Text style={[styles.mediaFileName, isPatient && { color: "rgba(255,255,255,0.9)" }]}>
-                {msg.mediaLabel}
-              </Text>
+              <Text style={[styles.mediaFileName, isPatient && { color: "rgba(255,255,255,0.9)" }]}>{msg.mediaLabel}</Text>
             </View>
           )}
           {msg.type === "video" && (
@@ -154,9 +141,7 @@ export default function MessagesScreen() {
                 <Ionicons name="videocam" size={28} color={isPatient ? Colors.teal : Colors.purple} />
                 <Ionicons name="play-circle" size={22} color={Colors.white} style={{ position: "absolute" }} />
               </View>
-              <Text style={[styles.mediaFileName, isPatient && { color: "rgba(255,255,255,0.9)" }]}>
-                {msg.mediaLabel}
-              </Text>
+              <Text style={[styles.mediaFileName, isPatient && { color: "rgba(255,255,255,0.9)" }]}>{msg.mediaLabel}</Text>
             </View>
           )}
           <Text style={[styles.timeText, isPatient && { color: "rgba(255,255,255,0.65)" }]}>{msg.time}</Text>
@@ -176,7 +161,7 @@ export default function MessagesScreen() {
             <Ionicons name="medical" size={16} color={Colors.white} />
           </View>
           <View>
-            <Text style={styles.headerName}>Dr. Priya Sharma</Text>
+            <Text style={styles.headerName}>{doctorName}</Text>
             <View style={styles.onlineBadge}>
               <View style={styles.onlineDot} />
               <Text style={styles.onlineText}>Obstetrics & Gynecology</Text>
@@ -219,7 +204,7 @@ export default function MessagesScreen() {
           style={styles.input}
           value={text}
           onChangeText={setText}
-          placeholder="Message Dr. Sharma..."
+          placeholder={`Message ${doctorName}...`}
           placeholderTextColor={Colors.textMuted}
           multiline
           maxLength={1000}
@@ -244,48 +229,19 @@ export default function MessagesScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingBottom: 12,
-    backgroundColor: Colors.white,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-    gap: 10,
-  },
+  header: { flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingBottom: 12, backgroundColor: Colors.white, borderBottomWidth: 1, borderBottomColor: Colors.border, gap: 10 },
   backBtn: { width: 40, height: 40, borderRadius: 12, alignItems: "center", justifyContent: "center" },
   headerInfo: { flex: 1, flexDirection: "row", alignItems: "center", gap: 10 },
-  headerAvatar: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: Colors.teal,
-    alignItems: "center",
-    justifyContent: "center",
-  },
+  headerAvatar: { width: 38, height: 38, borderRadius: 19, backgroundColor: Colors.teal, alignItems: "center", justifyContent: "center" },
   headerName: { fontSize: 15, fontFamily: "Inter_700Bold", color: Colors.text },
   onlineBadge: { flexDirection: "row", alignItems: "center", gap: 4 },
   onlineDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: Colors.success },
   onlineText: { fontSize: 11, fontFamily: "Inter_400Regular", color: Colors.textMuted },
-  dateChip: {
-    alignSelf: "center",
-    backgroundColor: Colors.border,
-    borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 4,
-  },
+  dateChip: { alignSelf: "center", backgroundColor: Colors.border, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 4 },
   dateChipText: { fontSize: 11, fontFamily: "Inter_500Medium", color: Colors.textMuted },
   msgRow: { flexDirection: "row", alignItems: "flex-end", gap: 8 },
   msgRowRight: { alignSelf: "flex-end", flexDirection: "row-reverse" },
-  doctorAvatar: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: Colors.teal,
-    alignItems: "center",
-    justifyContent: "center",
-  },
+  doctorAvatar: { width: 30, height: 30, borderRadius: 15, backgroundColor: Colors.teal, alignItems: "center", justifyContent: "center" },
   bubble: { borderRadius: 18, padding: 12, gap: 4 },
   bubbleDoctor: { backgroundColor: Colors.white, borderBottomLeftRadius: 4 },
   bubblePatient: { backgroundColor: Colors.teal, borderBottomRightRadius: 4 },
@@ -293,93 +249,22 @@ const styles = StyleSheet.create({
   bubbleTextPatient: { color: Colors.white },
   timeText: { fontSize: 10, fontFamily: "Inter_400Regular", color: Colors.textMuted, alignSelf: "flex-end" },
   voiceRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  playBtn: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: Colors.teal,
-    alignItems: "center",
-    justifyContent: "center",
-  },
+  playBtn: { width: 26, height: 26, borderRadius: 13, backgroundColor: Colors.teal, alignItems: "center", justifyContent: "center" },
   waveform: { flexDirection: "row", alignItems: "center", gap: 2 },
   bar: { width: 3, borderRadius: 2 },
   durText: { fontSize: 11, fontFamily: "Inter_500Medium", color: "rgba(255,255,255,0.75)" },
   mediaBox: { gap: 6, minWidth: 160 },
-  imgPreview: {
-    height: 80,
-    backgroundColor: Colors.tealLight,
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  videoPreview: {
-    height: 80,
-    backgroundColor: Colors.tealLight,
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-    position: "relative",
-  },
+  imgPreview: { height: 80, backgroundColor: Colors.tealLight, borderRadius: 10, alignItems: "center", justifyContent: "center" },
+  videoPreview: { height: 80, backgroundColor: Colors.tealLight, borderRadius: 10, alignItems: "center", justifyContent: "center", position: "relative" },
   mediaFileName: { fontSize: 12, fontFamily: "Inter_500Medium", color: "rgba(255,255,255,0.85)" },
-  recordingBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    backgroundColor: Colors.dangerLight,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderTopWidth: 1,
-    borderTopColor: Colors.danger + "30",
-  },
+  recordingBar: { flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: Colors.dangerLight, paddingHorizontal: 20, paddingVertical: 10, borderTopWidth: 1, borderTopColor: Colors.danger + "30" },
   recordingDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: Colors.danger },
   recordingText: { flex: 1, fontSize: 14, fontFamily: "Inter_600SemiBold", color: Colors.danger },
   recordingHint: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.danger + "CC" },
-  inputBar: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    gap: 8,
-    backgroundColor: Colors.white,
-    paddingHorizontal: 12,
-    paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: Colors.border,
-  },
-  attachBtn: {
-    width: 40,
-    height: 40,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: 12,
-    backgroundColor: Colors.background,
-  },
-  input: {
-    flex: 1,
-    backgroundColor: Colors.background,
-    borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    fontSize: 14,
-    fontFamily: "Inter_400Regular",
-    color: Colors.text,
-    maxHeight: 100,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  sendBtn: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: Colors.teal,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  micBtn: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: Colors.teal,
-    alignItems: "center",
-    justifyContent: "center",
-  },
+  inputBar: { flexDirection: "row", alignItems: "flex-end", gap: 8, backgroundColor: Colors.white, paddingHorizontal: 12, paddingTop: 10, borderTopWidth: 1, borderTopColor: Colors.border },
+  attachBtn: { width: 40, height: 40, alignItems: "center", justifyContent: "center", borderRadius: 12, backgroundColor: Colors.background },
+  input: { flex: 1, backgroundColor: Colors.background, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 10, fontSize: 14, fontFamily: "Inter_400Regular", color: Colors.text, maxHeight: 100, borderWidth: 1, borderColor: Colors.border },
+  sendBtn: { width: 42, height: 42, borderRadius: 21, backgroundColor: Colors.teal, alignItems: "center", justifyContent: "center" },
+  micBtn: { width: 42, height: 42, borderRadius: 21, backgroundColor: Colors.teal, alignItems: "center", justifyContent: "center" },
   micBtnActive: { backgroundColor: Colors.danger },
 });

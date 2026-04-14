@@ -10,21 +10,16 @@ import { useApp } from "@/context/AppContext";
 const ADMIN_COLOR = "#E67E22";
 const ADMIN_LIGHT = "#FEF5E7";
 
-const MOCK_STATS = [
-  { label: "Jan", patients: 18, doctors: 2 },
-  { label: "Feb", patients: 24, doctors: 3 },
-  { label: "Mar", patients: 31, doctors: 4 },
-];
-
 export default function AdminReports() {
-  const { allHospitals, allDoctors, allUsers } = useApp();
+  const { allHospitals, allDoctors, allUsers, auditLogs, appointments } = useApp();
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 84 : insets.bottom + 80;
   const totalPatients = allUsers.filter((u) => u.role === "patient").length;
   const totalDoctors = allDoctors.length;
   const totalHospitals = allHospitals.length;
-  const maxPatients = Math.max(...MOCK_STATS.map((s) => s.patients));
+  const totalApts = appointments.length;
+  const completedApts = appointments.filter(a => a.status === "completed").length;
 
   return (
     <View style={styles.container}>
@@ -55,14 +50,18 @@ export default function AdminReports() {
         </View>
 
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Patient Growth</Text>
-          <Text style={styles.cardSub}>Monthly new registrations</Text>
-          <View style={styles.chart}>
-            {MOCK_STATS.map((s, i) => (
-              <View key={i} style={styles.chartCol}>
-                <Text style={styles.chartVal}>{s.patients}</Text>
-                <View style={[styles.bar, { height: (s.patients / maxPatients) * 100, backgroundColor: ADMIN_COLOR }]} />
-                <Text style={styles.chartLabel}>{s.label}</Text>
+          <Text style={styles.cardTitle}>Platform Metrics</Text>
+          <Text style={styles.cardSub}>Real-time statistics</Text>
+          <View style={styles.metricsGrid}>
+            {[
+              { label: "Total Appointments", value: totalApts, color: Colors.teal },
+              { label: "Completed Visits", value: completedApts, color: Colors.success },
+              { label: "Pending Visits", value: totalApts - completedApts, color: Colors.warning },
+              { label: "Audit Actions", value: auditLogs.length, color: Colors.purple },
+            ].map((m, i) => (
+              <View key={i} style={styles.metricCard}>
+                <Text style={[styles.metricVal, { color: m.color }]}>{m.value}</Text>
+                <Text style={styles.metricLabel}>{m.label}</Text>
               </View>
             ))}
           </View>
@@ -89,17 +88,17 @@ export default function AdminReports() {
         </View>
 
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>System Health</Text>
+          <Text style={styles.cardTitle}>Platform Health</Text>
           <View style={{ gap: 12, marginTop: 8 }}>
             {[
-              { label: "API Response Time", value: "42ms", status: "good" },
-              { label: "Database Status", value: "Healthy", status: "good" },
-              { label: "Active Sessions", value: "1", status: "good" },
-              { label: "Storage Used", value: "2.1 MB / 10 GB", status: "good" },
-              { label: "Last Backup", value: "2 hours ago", status: "good" },
+              { label: "Data Storage", value: "AsyncStorage", status: "good" },
+              { label: "Active Users", value: `${allUsers.filter(u => u.isActive).length}/${allUsers.length}`, status: allUsers.filter(u => !u.isActive).length === 0 ? "good" : "warn" },
+              { label: "Total Records", value: `${totalPatients + totalDoctors + totalHospitals}`, status: "good" },
+              { label: "Audit Log Entries", value: `${auditLogs.length}`, status: "good" },
+              { label: "Appointments Tracked", value: `${totalApts}`, status: "good" },
             ].map((item, i) => (
               <View key={i} style={styles.healthRow}>
-                <View style={styles.healthDot} />
+                <View style={[styles.healthDot, { backgroundColor: item.status === "good" ? Colors.success : Colors.warning }]} />
                 <Text style={styles.healthLabel}>{item.label}</Text>
                 <Text style={styles.healthVal}>{item.value}</Text>
               </View>
@@ -125,11 +124,10 @@ const styles = StyleSheet.create({
   card: { backgroundColor: Colors.white, borderRadius: 18, padding: 16, shadowColor: Colors.shadow, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 1, shadowRadius: 8, elevation: 2 },
   cardTitle: { fontSize: 16, fontFamily: "Inter_700Bold", color: Colors.text },
   cardSub: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.textMuted, marginTop: 2, marginBottom: 16 },
-  chart: { flexDirection: "row", alignItems: "flex-end", gap: 20, height: 130, paddingTop: 8 },
-  chartCol: { flex: 1, alignItems: "center", gap: 4 },
-  chartVal: { fontSize: 11, fontFamily: "Inter_600SemiBold", color: Colors.text },
-  bar: { width: "100%", borderRadius: 6, minHeight: 4 },
-  chartLabel: { fontSize: 12, fontFamily: "Inter_500Medium", color: Colors.textMuted },
+  metricsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+  metricCard: { width: "47%", backgroundColor: Colors.background, borderRadius: 12, padding: 14, alignItems: "center", gap: 4 },
+  metricVal: { fontSize: 26, fontFamily: "Inter_700Bold" },
+  metricLabel: { fontSize: 11, fontFamily: "Inter_400Regular", color: Colors.textMuted, textAlign: "center" },
   hospitalRow: { flexDirection: "row", alignItems: "center", gap: 10 },
   hAvatar: { width: 34, height: 34, borderRadius: 10, alignItems: "center", justifyContent: "center" },
   hName: { fontSize: 13, fontFamily: "Inter_600SemiBold", color: Colors.text },

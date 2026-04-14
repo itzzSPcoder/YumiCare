@@ -58,6 +58,14 @@ function RootLayoutNav() {
       <Stack.Screen name="hospital-detail" options={{ headerShown: false }} />
       <Stack.Screen name="doctor-detail" options={{ headerShown: false }} />
       <Stack.Screen name="admin-reports" options={{ headerShown: false }} />
+      <Stack.Screen name="vitals" options={{ headerShown: false }} />
+      <Stack.Screen name="kick-counter" options={{ headerShown: false }} />
+      <Stack.Screen name="book-appointment" options={{ headerShown: false }} />
+      <Stack.Screen name="write-prescription" options={{ headerShown: false }} />
+      <Stack.Screen name="bed-management" options={{ headerShown: false }} />
+      <Stack.Screen name="audit-trail" options={{ headerShown: false }} />
+      <Stack.Screen name="user-management" options={{ headerShown: false }} />
+      <Stack.Screen name="ultrasound-analysis" options={{ headerShown: false }} />
     </Stack>
   );
 }

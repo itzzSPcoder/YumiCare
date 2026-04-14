@@ -1,0 +1,10 @@
+dependencies:
+  onnxruntime: ^1.4.0
+  image: ^4.1.7
+  image_picker: ^1.1.2
+
+flutter:
+  assets:
+    - assets/ml/model.onnx
+    - assets/ml/labels.txt
+    - assets/ml/flutter_model_config.json

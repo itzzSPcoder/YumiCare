@@ -47,3 +47,21 @@ Thumbs.db
 # Replit
 .cache/
 .local/
+
+# Python
+.venv
+__pycache__/
+*.py[cod]
+*$py.class
+
+# ML Training & Datasets
+Dataset/
+runs/
+*.pt
+*.onnx
+*.tflite
+
+# AI/Agent logs
+.claude/
+.agents/
+scripts/src/generated/

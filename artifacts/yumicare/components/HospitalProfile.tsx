@@ -80,6 +80,7 @@ export default function HospitalProfile() {
             { icon: "person-add-outline" as const, label: "Add New Doctor", sub: "Create doctor account & credentials", action: () => router.push("/add-doctor") },
             { icon: "medical-outline" as const, label: "Manage Doctors", sub: "View and manage your doctors", action: () => router.push("/(tabs)/timeline") },
             { icon: "people-outline" as const, label: "View Patients", sub: "All patients in your hospital", action: () => router.push("/(tabs)/records") },
+            { icon: "bed-outline" as const, label: "Bed Management", sub: "Manage bed occupancy & admissions", action: () => router.push("/bed-management" as any) },
           ].map((item, i) => (
             <TouchableOpacity key={i} style={styles.menuItem} onPress={item.action} activeOpacity={0.8}>
               <View style={[styles.menuIcon, { backgroundColor: H_LIGHT }]}>

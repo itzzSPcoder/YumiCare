@@ -5,16 +5,18 @@ import Colors from "@/constants/colors";
 interface Props {
   title: string;
   action?: string;
+  actionText?: string;
   onAction?: () => void;
 }
 
-export function SectionHeader({ title, action, onAction }: Props) {
+export function SectionHeader({ title, action, actionText, onAction }: Props) {
+  const displayAction = action || actionText;
   return (
     <View style={styles.row}>
       <Text style={styles.title}>{title}</Text>
-      {action && (
+      {displayAction && (
         <TouchableOpacity onPress={onAction} activeOpacity={0.7}>
-          <Text style={styles.action}>{action}</Text>
+          <Text style={styles.action}>{displayAction}</Text>
         </TouchableOpacity>
       )}
     </View>

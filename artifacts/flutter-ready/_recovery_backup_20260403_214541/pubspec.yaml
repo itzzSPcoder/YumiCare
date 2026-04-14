@@ -1,0 +1,21 @@
+name: yumicare_flutter_yolo_demo
+description: Flutter demo app wired with YOLO ONNX detector.
+publish_to: none
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  onnxruntime: ^1.4.0
+  image: ^4.1.7
+  image_picker: ^1.1.2
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/ml/model.onnx
+    - assets/ml/labels.txt
+    - assets/ml/flutter_model_config.json

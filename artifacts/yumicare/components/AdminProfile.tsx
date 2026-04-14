@@ -70,6 +70,8 @@ export default function AdminProfile() {
             { icon: "add-circle-outline" as const, label: "Add New Hospital", sub: "Register a hospital & generate credentials", action: () => router.push("/add-hospital"), color: ADMIN_COLOR },
             { icon: "business-outline" as const, label: "Manage Hospitals", sub: "View, edit & deactivate hospitals", action: () => router.push("/(tabs)/timeline"), color: Colors.purple },
             { icon: "bar-chart-outline" as const, label: "System Reports", sub: "View platform-wide analytics", action: () => router.push("/admin-reports"), color: "#5B8FF9" },
+            { icon: "list-outline" as const, label: "Audit Trail", sub: "View all system activity logs", action: () => router.push("/audit-trail" as any), color: Colors.purple },
+            { icon: "people-outline" as const, label: "User Management", sub: "Manage all user accounts", action: () => router.push("/user-management" as any), color: Colors.teal },
           ].map((item, i) => (
             <TouchableOpacity key={i} style={styles.menuItem} onPress={item.action} activeOpacity={0.8}>
               <View style={[styles.menuIcon, { backgroundColor: item.color + "20" }]}>

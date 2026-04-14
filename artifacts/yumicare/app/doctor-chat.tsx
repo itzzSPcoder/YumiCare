@@ -16,62 +16,20 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
-import { useApp } from "@/context/AppContext";
-
-type MsgType = "text" | "voice" | "image" | "video";
-
-interface Message {
-  id: string;
-  from: "doctor" | "patient";
-  type: MsgType;
-  text?: string;
-  duration?: string;
-  mediaLabel?: string;
-  time: string;
-}
-
-const PATIENT_MSGS: Record<string, Message[]> = {
-  "PAT-2024-001": [
-    { id: "1", from: "patient", type: "text", text: "Good morning doctor! I wanted to ask about my recent blood report.", time: "9:10 AM" },
-    { id: "2", from: "doctor", type: "text", text: "Good morning Aisha! Your hemoglobin is slightly low at 11.2. Continue with iron supplements.", time: "9:25 AM" },
-    { id: "3", from: "patient", type: "text", text: "Should I be worried about the glucose level too?", time: "10:30 AM" },
-    { id: "4", from: "doctor", type: "text", text: "The glucose of 128 is borderline. We'll do a full GTT at your next visit. Avoid refined sugars.", time: "11:02 AM" },
-    { id: "5", from: "patient", type: "text", text: "Doctor, I've been having mild swelling in my feet.", time: "11:15 AM" },
-  ],
-  "PAT-2024-002": [
-    { id: "1", from: "patient", type: "text", text: "Doctor, the morning sickness is very severe today.", time: "8:00 AM" },
-    { id: "2", from: "doctor", type: "text", text: "Try ginger tea and eat small meals frequently. Avoid spicy food.", time: "8:30 AM" },
-    { id: "3", from: "patient", type: "voice", duration: "0:18", time: "Yesterday 2:10 PM" },
-    { id: "4", from: "doctor", type: "text", text: "I heard your message. Please come in tomorrow if it persists.", time: "Yesterday 3:00 PM" },
-    { id: "5", from: "patient", type: "text", text: "Thank you for the prescription, feeling better now.", time: "Yesterday 6:00 PM" },
-  ],
-  "PAT-2024-003": [
-    { id: "1", from: "patient", type: "text", text: "Hello doctor! Is it safe to travel by air at 14 weeks?", time: "2 days ago" },
-    { id: "2", from: "doctor", type: "text", text: "Yes, first trimester air travel is generally safe. Stay hydrated and walk around every hour.", time: "2 days ago" },
-    { id: "3", from: "patient", type: "image", mediaLabel: "ultrasound_14wk.jpg", time: "2 days ago" },
-    { id: "4", from: "doctor", type: "text", text: "The scan looks good! Baby is growing normally.", time: "2 days ago" },
-    { id: "5", from: "patient", type: "text", text: "When is my next appointment scheduled?", time: "2 days ago" },
-  ],
-  "PAT-2024-004": [
-    { id: "1", from: "patient", type: "text", text: "Doctor I have severe headache since morning.", time: "3 days ago" },
-    { id: "2", from: "patient", type: "text", text: "My vision is also slightly blurred.", time: "3 days ago" },
-    { id: "3", from: "patient", type: "video", mediaLabel: "symptom_video.mp4", time: "3 days ago" },
-    { id: "4", from: "doctor", type: "text", text: "⚠️ This sounds serious. Please come to the emergency room immediately. These are signs of preeclampsia.", time: "3 days ago" },
-    { id: "5", from: "patient", type: "text", text: "I have severe headache and vision blur since morning.", time: "3 days ago" },
-  ],
-};
+import { useApp, type ChatMessage } from "@/context/AppContext";
 
 export default function DoctorChatScreen() {
   const { patientId } = useLocalSearchParams<{ patientId: string }>();
-  const { doctorPatients } = useApp();
+  const { doctorPatients, doctorProfile, getConversation, sendChatMessage } = useApp();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const scrollRef = useRef<ScrollView>(null);
-  const patient = doctorPatients.find((p) => p.id === patientId) ?? doctorPatients[0]!;
-  const [messages, setMessages] = useState<Message[]>(
-    PATIENT_MSGS[patientId ?? ""] ?? PATIENT_MSGS["PAT-2024-001"]!
-  );
+  const patient = doctorPatients.find((p) => p.id === patientId) ?? doctorPatients[0];
+  const doctorId = doctorProfile?.id ?? "doc-001";
+  const pId = patient?.id ?? patientId ?? "pat-001";
+  const conversationKey = `${doctorId}_${pId}`;
+  const messages = getConversation(doctorId, pId);
   const [text, setText] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const [holdTimer, setHoldTimer] = useState<ReturnType<typeof setInterval> | null>(null);
@@ -80,10 +38,14 @@ export default function DoctorChatScreen() {
   const sendText = () => {
     if (!text.trim()) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setMessages((prev) => [
-      ...prev,
-      { id: String(Date.now()), from: "doctor", type: "text", text: text.trim(), time: "Just now" },
-    ]);
+    sendChatMessage({
+      conversationKey,
+      from: "doctor",
+      fromId: doctorId,
+      type: "text",
+      text: text.trim(),
+      time: new Date().toLocaleTimeString("en", { hour: "2-digit", minute: "2-digit" }),
+    });
     setText("");
     setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
   };
@@ -106,10 +68,14 @@ export default function DoctorChatScreen() {
     }
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     const dur = `0:${String(recordingSeconds).padStart(2, "0")}`;
-    setMessages((prev) => [
-      ...prev,
-      { id: String(Date.now()), from: "doctor", type: "voice", duration: dur, time: "Just now" },
-    ]);
+    sendChatMessage({
+      conversationKey,
+      from: "doctor",
+      fromId: doctorId,
+      type: "voice",
+      duration: dur,
+      time: new Date().toLocaleTimeString("en", { hour: "2-digit", minute: "2-digit" }),
+    });
     setIsRecording(false);
     setRecordingSeconds(0);
     setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
@@ -125,16 +91,14 @@ export default function DoctorChatScreen() {
         {
           text: "Send Sample",
           onPress: () => {
-            setMessages((prev) => [
-              ...prev,
-              {
-                id: String(Date.now()),
-                from: "doctor",
-                type,
-                mediaLabel: type === "image" ? "attachment_photo.jpg" : "attachment_video.mp4",
-                time: "Just now",
-              },
-            ]);
+            sendChatMessage({
+              conversationKey,
+              from: "doctor",
+              fromId: doctorId,
+              type,
+              mediaLabel: type === "image" ? "clinical_photo.jpg" : "examination_video.mp4",
+              time: new Date().toLocaleTimeString("en", { hour: "2-digit", minute: "2-digit" }),
+            });
             setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
           },
         },
@@ -142,13 +106,13 @@ export default function DoctorChatScreen() {
     );
   };
 
-  const renderMessage = (msg: Message) => {
+  const renderMessage = (msg: ChatMessage) => {
     const isDoctor = msg.from === "doctor";
     return (
       <View key={msg.id} style={[styles.msgRow, isDoctor && styles.msgRowRight]}>
         {!isDoctor && (
           <View style={styles.msgAvatar}>
-            <Text style={styles.msgAvatarText}>{patient.name.charAt(0)}</Text>
+            <Text style={styles.msgAvatarText}>{patient?.name?.charAt(0) ?? "P"}</Text>
           </View>
         )}
         <View style={[styles.bubble, isDoctor ? styles.bubbleDoctor : styles.bubblePatient, { maxWidth: "72%" }]}>
